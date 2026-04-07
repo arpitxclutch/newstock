@@ -17,9 +17,9 @@ Run with:
 from __future__ import annotations
 
 import logging
-import time
 from typing import Any
 
+import pandas as pd
 import streamlit as st
 
 from multi_source_fetcher import MultiSourceFetcher
@@ -113,32 +113,29 @@ def _build_sidebar() -> dict[str, Any]:
     st.sidebar.subheader("📊 Ticker")
     ticker_input = st.sidebar.text_input(
         "Enter ticker symbol",
-        value="",
+        value=st.session_state.get("preset_ticker", ""),
         placeholder="e.g. TATAMOTORS.NS or NVDA",
         help="For Indian stocks add .NS (NSE) or .BO (BSE). For US stocks just use the ticker.",
+        key="ticker_text_input",
     )
 
-    # Preset suggestions
+    # Preset suggestions — use session_state to persist selection across reruns
     with st.sidebar.expander("🇮🇳 Indian stock presets"):
         cols = st.columns(2)
-        chosen_indian = None
         for i, t in enumerate(_INDIAN_PRESETS):
             if cols[i % 2].button(t, key=f"ind_{t}", use_container_width=True):
-                chosen_indian = t
+                st.session_state["preset_ticker"] = t
+                st.rerun()
 
     with st.sidebar.expander("🇺🇸 US stock presets"):
         cols = st.columns(2)
-        chosen_us = None
         for i, t in enumerate(_US_PRESETS):
             if cols[i % 2].button(t, key=f"us_{t}", use_container_width=True):
-                chosen_us = t
+                st.session_state["preset_ticker"] = t
+                st.rerun()
 
-    # Resolve ticker from presets
+    # Resolve ticker: text input takes priority (user may have edited it)
     ticker = ticker_input.strip().upper()
-    if chosen_indian:
-        ticker = chosen_indian
-    elif chosen_us:
-        ticker = chosen_us
 
     st.sidebar.markdown("---")
 
@@ -251,7 +248,6 @@ def _render_step1(sources: list[dict], ticker: str) -> None:
     )
 
     with st.expander("📋 Raw data from all sources"):
-        import pandas as pd
         _DISPLAY_FIELDS = [
             "source", "company_name", "currency", "current_price", "market_cap",
             "revenue", "net_income", "ebitda", "total_debt", "cash",
@@ -287,7 +283,6 @@ def _render_step2(audit_report: Any, cv_result: dict) -> None:
     cols[2].metric("Flagged Metrics", flagged_count, delta=f"{flagged_count} issues" if flagged_count else None, delta_color="inverse")
 
     # Per-metric audit table
-    import pandas as pd
     rows = []
     currency_symbol = "₹" if audit_report.currency == "INR" else "$"
     for audit in audit_report.metric_audits:
@@ -395,7 +390,6 @@ def _render_step3(model_result: Any) -> None:
     # Model eligibility matrix
     st.markdown("#### 📐 Model Eligibility Matrix")
 
-    import pandas as pd
     matrix_rows = []
     for m in model_result.model_eligibility:
         selected = m.model_name == model_result.selected_model
@@ -509,7 +503,6 @@ def _render_step4(valuation: Any, audit_report: Any) -> None:
 
     # Assumptions
     with st.expander("📋 Key Assumptions"):
-        import pandas as pd
         rows = [{"Parameter": k, "Value": v} for k, v in valuation.key_assumptions.items()]
         df = pd.DataFrame(rows)
         st.dataframe(df, use_container_width=True, hide_index=True)
