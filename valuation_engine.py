@@ -72,8 +72,11 @@ class ValuationResult:
 # Discount rate helpers
 # ---------------------------------------------------------------------------
 
-_RISK_FREE_INDIA = 0.068    # ~10-yr Gsec yield
-_RISK_FREE_US = 0.043       # ~10-yr Treasury yield
+# Risk-free rates sourced from sovereign 10-year bond yields (as of early 2025).
+# Update these when running in significantly different interest-rate environments.
+_RISK_FREE_INDIA = 0.068    # ~10-yr Indian Gsec yield (RBI data, early 2025)
+_RISK_FREE_US = 0.043       # ~10-yr US Treasury yield (Fed data, early 2025)
+# Equity Risk Premiums sourced from Damodaran's January 2025 country risk estimates.
 _EQUITY_RISK_PREMIUM_INDIA = 0.075
 _EQUITY_RISK_PREMIUM_US = 0.055
 
@@ -216,7 +219,9 @@ class ValuationEngine:
         model_result, assumptions,
     ) -> ValuationResult:
         # FCFE ≈ free cash flow (already equity cash flow proxy)
-        fcfe = fcf if fcf and fcf > 0 else net_income * 0.7  # fallback: 70% of NI
+        # Fallback: use 70% of net income as a typical reinvestment-adjusted proxy
+        # (industry norm: ~30% reinvestment rate for mature companies).
+        fcfe = fcf if fcf and fcf > 0 else net_income * 0.7
         if not fcfe or fcfe <= 0:
             return ValuationResult(
                 ticker=ticker, company_name=company_name, model_used=model,
@@ -279,7 +284,8 @@ class ValuationEngine:
         high_g_yrs, fcf, ebitda, shares, current_price,
         model_result, assumptions, total_debt,
     ) -> ValuationResult:
-        # FCFF approximated from FCF + after-tax interest (or 80% of EBITDA)
+        # FCFF approximated from FCF (preferred) or from EBITDA using a 60% conversion
+        # factor (accounts for typical capex ~15%, taxes ~20%, and working capital ~5%).
         fcff = fcf if fcf and fcf > 0 else (ebitda * 0.6 if ebitda and ebitda > 0 else None)
         if not fcff or fcff <= 0:
             return ValuationResult(

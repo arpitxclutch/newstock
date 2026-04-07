@@ -229,7 +229,8 @@ def _fmt_value(value: float | None, metric: str, currency_symbol: str) -> str:
             return f"{value / 1e6:,.1f}M shares"
         return f"{value:,.0f} shares"
 
-    # Large financial figures — scale to Cr (INR) or B/M (USD)
+    # Large financial figures — scale to Cr (INR) or B/M (USD).
+    # Note: 1 Crore (Cr) = 10 million (10,000,000) — standard Indian financial unit.
     if currency_symbol == "₹":
         if abs(value) >= 1e7:
             return f"₹{value / 1e7:,.1f} Cr"

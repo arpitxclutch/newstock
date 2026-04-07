@@ -139,7 +139,7 @@ class ModelSelectionResult:
             ratio = self.dividend_per_share / self.fcfe_per_share * 100
             lines.append(
                 f"     Dividend/FCFE ratio: {ratio:.1f}%  "
-                f"→ {'Use DDM (dividends represent FCF well)' if self.dividend_covers_fcfe else 'Use FCFE (dividends << free cash flow)'}"
+                f"→ {'Use DDM (dividends represent FCF well)' if self.dividend_covers_fcfe else 'Use FCFE (dividends significantly below free cash flow)'}"
             )
 
         lines.append("\n  📐 MODEL ELIGIBILITY MATRIX")
@@ -517,7 +517,7 @@ class EnhancedModelSelector:
                 rationale = (
                     f"Exceptional growth ({firm_growth * 100:.1f}%) with a {moat_years}-year moat. "
                     f"Three-stage FCFE captures: peak growth → gradual moderation → stable terminal. "
-                    f"Dividends ({dps:.2f}) << FCFE ({fcfe_per_share:.2f}) — use free cash flow directly."
+                    f"Dividends ({dps:.2f}) are significantly below FCFE ({fcfe_per_share:.2f}) — use free cash flow directly."
                 )
                 high_g_yrs = max(moat_years // 2, 3)
                 trans_g = economy_growth + (firm_growth - economy_growth) * 0.3

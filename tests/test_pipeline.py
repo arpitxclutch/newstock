@@ -352,11 +352,16 @@ class TestEnhancedModelSelector:
         assert any("FINAL MODEL SELECTION" in line for line in lines)
 
     def test_firm_growth_from_cagr(self):
+        from data_auditor import compute_revenue_cagr
         selector = EnhancedModelSelector("TATAMOTORS.NS", is_indian=True)
         result = selector.select(self.indian_report, self.indian_attr)
         # Historical revenues are provided in mock data, so CAGR should be used
         assert "CAGR" in result.firm_growth_source
         assert result.firm_growth > 0
+        # Validate that the computed CAGR matches expectations from the mock data
+        expected_cagr = compute_revenue_cagr([4.52e11, 3.96e11, 3.51e11, 2.95e11], years=3)
+        assert expected_cagr is not None
+        assert abs(result.firm_growth - expected_cagr) < 0.001
 
     def test_growth_premium_sign(self):
         selector = EnhancedModelSelector("TATAMOTORS.NS", is_indian=True)
